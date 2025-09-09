@@ -1,6 +1,7 @@
 import argparse
 from comtrade_analyzer.analyzer import ComtradeAnalyzer
 
+
 def main():
     """
     The main entry point for the command-line interface.
@@ -28,7 +29,9 @@ def main():
         "--voltage-ch", required=True, help="ID of the voltage channel to analyze."
     )
     parser_faults.add_argument(
-        "--current-ch", required=True, help="ID of the current channel for saturation detection."
+        "--current-ch",
+        required=True,
+        help="ID of the current channel for saturation detection.",
     )
     parser_faults.add_argument(
         "--trip-ch", required=True, help="ID of the digital trip channel."
@@ -44,6 +47,7 @@ def main():
         run_conformance_checks(analyzer, args)
     elif args.command == "faults":
         run_fault_analysis(analyzer, args)
+
 
 def run_conformance_checks(analyzer: ComtradeAnalyzer, args):
     """
@@ -62,6 +66,7 @@ def run_conformance_checks(analyzer: ComtradeAnalyzer, args):
         for warning in warnings:
             print(warning)
 
+
 def run_fault_analysis(analyzer: ComtradeAnalyzer, args):
     """
     Runs and prints the results of fault analysis.
@@ -74,19 +79,25 @@ def run_fault_analysis(analyzer: ComtradeAnalyzer, args):
             print(f"Error detecting voltage sags: {sag['error']}")
             return
 
-        print(f"Voltage sag detected on '{sag['channel_id']}' at {sag['start_time']:.4f}s.")
+        print(
+            f"Voltage sag detected on '{sag['channel_id']}' at {sag['start_time']:.4f}s."
+        )
 
-        trip_info = analyzer.check_relay_operation(args.trip_ch, sag['start_time'])
+        trip_info = analyzer.check_relay_operation(args.trip_ch, sag["start_time"])
         if "warning" in trip_info:
             print(f"Relay operation check: {trip_info['warning']}")
         else:
-            print(f"Relay trip detected at {trip_info['trip_time']:.4f}s (Delay: {trip_info['trip_delay_ms']:.2f}ms).")
+            print(
+                f"Relay trip detected at {trip_info['trip_time']:.4f}s (Delay: {trip_info['trip_delay_ms']:.2f}ms)."
+            )
     else:
         print("No voltage sags detected.")
 
     saturation_info = analyzer.detect_ct_saturation(args.current_ch)
     if saturation_info and "warning" not in saturation_info:
-        print(f"Potential CT saturation detected on '{args.current_ch}' at {saturation_info['saturation_start_time']:.4f}s.")
+        print(
+            f"Potential CT saturation detected on '{args.current_ch}' at {saturation_info['saturation_start_time']:.4f}s."
+        )
     elif saturation_info and "warning" in saturation_info:
         print(f"CT saturation check: {saturation_info['warning']}")
     else:
