@@ -11,6 +11,13 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # Subparser for providing information about the COMTRADE file
+    parser_info = subparsers.add_parser(
+        "info", help="Display information about the COMTRADE file, including channel IDs."
+    )
+    parser_info.add_argument("cfg_file", help="Path to the COMTRADE .cfg file.")
+
+
     # Subparser for conformance analysis
     parser_conformance = subparsers.add_parser(
         "conformance", help="Check for conformance errors in the COMTRADE file."
@@ -43,7 +50,9 @@ def main():
     args = parser.parse_args()
     analyzer = ComtradeAnalyzer(args.cfg_file)
 
-    if args.command == "conformance":
+    if args.command == "info":
+        run_info(analyzer)
+    elif args.command == "conformance":
         run_conformance_checks(analyzer, args)
     elif args.command == "faults":
         run_fault_analysis(analyzer, args)
@@ -102,3 +111,22 @@ def run_fault_analysis(analyzer: ComtradeAnalyzer, args):
         print(f"CT saturation check: {saturation_info['warning']}")
     else:
         print("No CT saturation detected.")
+
+
+def run_info(analyzer: ComtradeAnalyzer):
+    """
+    Prints information about the COMTRADE file, including channel IDs.
+    """
+    print("COMTRADE File Information:")
+    print(f"  Station: {analyzer.cfg.station_name}")
+    print(f"  Recorder ID: {analyzer.cfg.rec_dev_id}")
+    print(f"  Start Time: {analyzer.recorder.start_timestamp}")
+    print(f"  Trigger Time: {analyzer.recorder.trigger_timestamp}")
+    print(f"  File Type: {analyzer.cfg.ft}")
+    print(f"  Frequency: {analyzer.cfg.frequency} Hz")
+    print("\nAnalog Channels:")
+    for i, channel_id in enumerate(analyzer.recorder.analog_channel_ids):
+        print(f"  {i+1}: {channel_id}")
+    print("\nDigital Channels:")
+    for i, channel_id in enumerate(analyzer.recorder.status_channel_ids):
+        print(f"  {i+1}: {channel_id}")

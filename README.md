@@ -29,6 +29,15 @@ To use this tool, you need Python 3.12+ and `uv`.
 
 The CLI provides two main commands: `conformance` and `faults`.
 
+#### Information
+
+You can use it to display information about a COMTRADE file, including the available channel IDs, which should help with using the faults command.
+
+For example:
+```bash
+uv run main.py info comtrade_files/sample_1999_bin.cfg
+```
+
 #### Conformance Analysis
 
 Checks for file format issues.
