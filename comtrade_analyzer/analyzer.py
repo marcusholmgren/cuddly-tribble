@@ -1,5 +1,6 @@
 import comtrade
 import numpy as np
+from typing import Literal
 
 
 class ComtradeAnalyzer:
@@ -19,9 +20,7 @@ class ComtradeAnalyzer:
         if file_path.lower().endswith(".cff"):
             self.recorder = comtrade.load(file_path, encoding=encoding)
         else:
-            self.dat_path = (
-                file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
-            )
+            self.dat_path = file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
             self.recorder = comtrade.load(file_path, self.dat_path, encoding=encoding)
 
     @property
@@ -86,7 +85,9 @@ class ComtradeAnalyzer:
         errors = []
         valid_file_types = ["ASCII", "BINARY", "BINARY32", "FLOAT32"]
         if self.cfg.ft.upper() not in valid_file_types:
-            errors.append(f"Error: Invalid file type '{self.cfg.ft}'. Valid types are: {', '.join(valid_file_types)}")
+            errors.append(
+                f"Error: Invalid file type '{self.cfg.ft}'. Valid types are: {', '.join(valid_file_types)}"
+            )
         return errors
 
     def check_for_missing_information(self, expected_freq: float = 60.0) -> list:
@@ -227,7 +228,7 @@ class ComtradeAnalyzer:
         nominal_voltage: float,
         threshold: float,
         window_size: int,
-        event_type: str,
+        event_type: Literal["sag", "swell"],
     ) -> list:
         """
         Detects voltage events (sags or swells) in a specific analog channel.

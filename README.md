@@ -20,7 +20,7 @@ To use this tool, you need Python 3.12+ and `uv`.
 
 2.  **Install dependencies:**
     ```bash
-    uv pip install -e .
+    uv sync
     ```
 
 ## Usage
