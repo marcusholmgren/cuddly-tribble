@@ -74,6 +74,16 @@ def test_detect_voltage_sags(cfg_analyzer):
     assert isinstance(sags, list)
 
 
+def test_detect_voltage_swells(cfg_analyzer):
+    """
+    Tests the detect_voltage_swells method.
+    """
+    # This is a placeholder test. The sample file may not have a swell.
+    # In a real scenario, we would use a file with a known swell.
+    swells = cfg_analyzer.detect_voltage_swells("VA", nominal_voltage=230)
+    assert isinstance(swells, list)
+
+
 def test_check_relay_operation(cfg_analyzer):
     """
     Tests the check_relay_operation method.
