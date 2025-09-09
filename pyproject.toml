@@ -6,9 +6,15 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "comtrade>=0.1.2",
+    "numpy>=1.26.0",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
 ]
