@@ -84,8 +84,9 @@ class ComtradeAnalyzer:
         :return: A list of error messages.
         """
         errors = []
-        if self.cfg.ft not in ["ASCII", "BINARY"]:
-            errors.append(f"Error: Invalid file type '{self.cfg.ft}'")
+        valid_file_types = ["ASCII", "BINARY", "BINARY32", "FLOAT32"]
+        if self.cfg.ft.upper() not in valid_file_types:
+            errors.append(f"Error: Invalid file type '{self.cfg.ft}'. Valid types are: {', '.join(valid_file_types)}")
         return errors
 
     def check_for_missing_information(self, expected_freq: float = 60.0) -> list:
