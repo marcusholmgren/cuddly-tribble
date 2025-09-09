@@ -7,15 +7,22 @@ class ComtradeAnalyzer:
     A class to analyze COMTRADE files for conformance errors and fault patterns.
     """
 
-    def __init__(self, cfg_path: str):
+    def __init__(self, file_path: str, encoding: str = "utf-8"):
         """
-        Initializes the ComtradeAnalyzer with a path to the .cfg file.
+        Initializes the ComtradeAnalyzer with a path to a COMTRADE file.
+        It can be a .cfg file (with its associated .dat file) or a .cff file.
 
-        :param cfg_path: The path to the COMTRADE .cfg file.
+        :param file_path: The path to the COMTRADE .cfg or .cff file.
+        :param encoding: The encoding of the configuration file.
         """
-        self.cfg_path = cfg_path
-        self.dat_path = cfg_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
-        self.recorder = comtrade.load(self.cfg_path, self.dat_path)
+        self.file_path = file_path
+        if file_path.lower().endswith(".cff"):
+            self.recorder = comtrade.load(file_path, encoding=encoding)
+        else:
+            self.dat_path = (
+                file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
+            )
+            self.recorder = comtrade.load(file_path, self.dat_path, encoding=encoding)
 
     @property
     def cfg(self):
