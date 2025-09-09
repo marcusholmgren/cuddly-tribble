@@ -47,6 +47,16 @@ def main():
         "--nominal-v", type=float, required=True, help="Nominal voltage."
     )
 
+    # Subparser for fault analysis grid search
+    parser_faults_gs = subparsers.add_parser(
+        "faults-grid-search",
+        help="Run fault analysis on all channel combinations.",
+    )
+    parser_faults_gs.add_argument("cfg_file", help="Path to the COMTRADE .cfg file.")
+    parser_faults_gs.add_argument(
+        "--nominal-v", type=float, required=True, help="Nominal voltage."
+    )
+
     args = parser.parse_args()
     analyzer = ComtradeAnalyzer(args.cfg_file)
 
@@ -56,6 +66,48 @@ def main():
         run_conformance_checks(analyzer, args)
     elif args.command == "faults":
         run_fault_analysis(analyzer, args)
+    elif args.command == "faults-grid-search":
+        run_fault_analysis_grid_search(analyzer, args)
+
+
+def run_fault_analysis_grid_search(analyzer: ComtradeAnalyzer, args):
+    """
+    Runs fault analysis on all combinations of voltage, current, and trip channels.
+    """
+    print("Running fault analysis grid search...")
+    analog_channels = analyzer.recorder.analog_channel_ids
+    digital_channels = analyzer.recorder.status_channel_ids
+    found_issues = False
+
+    for v_ch in analog_channels:
+        for c_ch in analog_channels:
+            if v_ch == c_ch:
+                continue
+
+            sags = analyzer.detect_voltage_sags(v_ch, args.nominal_v)
+            if not sags or "error" in sags[0]:
+                continue
+
+            sag = sags[0]
+            saturation_info = analyzer.detect_ct_saturation(c_ch)
+
+            # A sag was detected, so we always print the header
+            print(f"\n--- Analysis for V:{v_ch}, C:{c_ch} ---")
+            print(f"  Voltage sag on '{v_ch}' at {sag['start_time']:.4f}s.")
+            if saturation_info and "warning" not in saturation_info:
+                print(
+                    f"  Potential CT saturation on '{c_ch}' at {saturation_info['saturation_start_time']:.4f}s."
+                )
+
+            # Now, check for trips on all digital channels
+            for t_ch in digital_channels:
+                trip_info = analyzer.check_relay_operation(t_ch, sag["start_time"])
+                if "warning" not in trip_info:
+                    print(
+                        f"  Relay trip on '{t_ch}' at {trip_info['trip_time']:.4f}s (Delay: {trip_info['trip_delay_ms']:.2f}ms)."
+                    )
+
+    print("\nGrid search complete.")
 
 
 def run_conformance_checks(analyzer: ComtradeAnalyzer, args):
