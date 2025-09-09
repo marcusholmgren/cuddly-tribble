@@ -13,10 +13,10 @@ def main():
 
     # Subparser for providing information about the COMTRADE file
     parser_info = subparsers.add_parser(
-        "info", help="Display information about the COMTRADE file, including channel IDs."
+        "info",
+        help="Display information about the COMTRADE file, including channel IDs.",
     )
     parser_info.add_argument("cfg_file", help="Path to the COMTRADE .cfg file.")
-
 
     # Subparser for conformance analysis
     parser_conformance = subparsers.add_parser(
@@ -77,7 +77,6 @@ def run_fault_analysis_grid_search(analyzer: ComtradeAnalyzer, args):
     print("Running fault analysis grid search...")
     analog_channels = analyzer.recorder.analog_channel_ids
     digital_channels = analyzer.recorder.status_channel_ids
-    found_issues = False
 
     for v_ch in analog_channels:
         for c_ch in analog_channels:
@@ -178,7 +177,7 @@ def run_info(analyzer: ComtradeAnalyzer):
     print(f"  Frequency: {analyzer.cfg.frequency} Hz")
     print("\nAnalog Channels:")
     for i, channel_id in enumerate(analyzer.recorder.analog_channel_ids):
-        print(f"  {i+1}: {channel_id}")
+        print(f"  {i + 1}: {channel_id}")
     print("\nDigital Channels:")
     for i, channel_id in enumerate(analyzer.recorder.status_channel_ids):
-        print(f"  {i+1}: {channel_id}")
+        print(f"  {i + 1}: {channel_id}")

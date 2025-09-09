@@ -1,5 +1,6 @@
 import comtrade
 import numpy as np
+from typing import Literal
 
 
 class ComtradeAnalyzer:
@@ -19,9 +20,7 @@ class ComtradeAnalyzer:
         if file_path.lower().endswith(".cff"):
             self.recorder = comtrade.load(file_path, encoding=encoding)
         else:
-            self.dat_path = (
-                file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
-            )
+            self.dat_path = file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
             self.recorder = comtrade.load(file_path, self.dat_path, encoding=encoding)
 
     @property
@@ -86,7 +85,9 @@ class ComtradeAnalyzer:
         errors = []
         valid_file_types = ["ASCII", "BINARY", "BINARY32", "FLOAT32"]
         if self.cfg.ft.upper() not in valid_file_types:
-            errors.append(f"Error: Invalid file type '{self.cfg.ft}'. Valid types are: {', '.join(valid_file_types)}")
+            errors.append(
+                f"Error: Invalid file type '{self.cfg.ft}'. Valid types are: {', '.join(valid_file_types)}"
+            )
         return errors
 
     def check_for_missing_information(self, expected_freq: float = 60.0) -> list:
@@ -139,34 +140,13 @@ class ComtradeAnalyzer:
         :param window_size: The size of the rolling window for RMS calculation.
         :return: A list of dictionaries, each representing a detected sag event.
         """
-        sags = []
-        voltage_index = self._find_channel_index(voltage_channel_id, "analog")
-
-        if voltage_index is None:
-            return [{"error": f"Voltage channel '{voltage_channel_id}' not found."}]
-
-        voltage_data = self.analog_channels[voltage_index]
-        rms_values = np.sqrt(
-            np.convolve(
-                np.array(voltage_data) ** 2,
-                np.ones(window_size) / window_size,
-                mode="valid",
-            )
+        return self._detect_voltage_events(
+            voltage_channel_id=voltage_channel_id,
+            nominal_voltage=nominal_voltage,
+            threshold=threshold,
+            window_size=window_size,
+            event_type="sag",
         )
-        sag_threshold = nominal_voltage * threshold
-
-        sag_indices = np.where(rms_values < sag_threshold)[0]
-        if sag_indices.size > 0:
-            start_index = sag_indices[0]
-            start_time = self.time[start_index]
-            sags.append(
-                {
-                    "channel_id": voltage_channel_id,
-                    "start_time": start_time,
-                    "min_rms_voltage": rms_values[start_index],
-                }
-            )
-        return sags
 
     def detect_voltage_swells(
         self,
@@ -184,34 +164,13 @@ class ComtradeAnalyzer:
         :param window_size: The size of the rolling window for RMS calculation.
         :return: A list of dictionaries, each representing a detected swell event.
         """
-        swells = []
-        voltage_index = self._find_channel_index(voltage_channel_id, "analog")
-
-        if voltage_index is None:
-            return [{"error": f"Voltage channel '{voltage_channel_id}' not found."}]
-
-        voltage_data = self.analog_channels[voltage_index]
-        rms_values = np.sqrt(
-            np.convolve(
-                np.array(voltage_data) ** 2,
-                np.ones(window_size) / window_size,
-                mode="valid",
-            )
+        return self._detect_voltage_events(
+            voltage_channel_id=voltage_channel_id,
+            nominal_voltage=nominal_voltage,
+            threshold=threshold,
+            window_size=window_size,
+            event_type="swell",
         )
-        swell_threshold = nominal_voltage * threshold
-
-        swell_indices = np.where(rms_values > swell_threshold)[0]
-        if swell_indices.size > 0:
-            start_index = swell_indices[0]
-            start_time = self.time[start_index]
-            swells.append(
-                {
-                    "channel_id": voltage_channel_id,
-                    "start_time": start_time,
-                    "max_rms_voltage": rms_values[start_index],
-                }
-            )
-        return swells
 
     def check_relay_operation(
         self, trip_channel_id: str, fault_start_time: float
@@ -262,6 +221,61 @@ class ComtradeAnalyzer:
             if np.all(window == window[0]):
                 return {"saturation_start_time": self.time[i]}
         return None
+
+    def _detect_voltage_events(
+        self,
+        voltage_channel_id: str,
+        nominal_voltage: float,
+        threshold: float,
+        window_size: int,
+        event_type: Literal["sag", "swell"],
+    ) -> list:
+        """
+        Detects voltage events (sags or swells) in a specific analog channel.
+
+        :param voltage_channel_id: The ID of the voltage channel to analyze.
+        :param nominal_voltage: The nominal voltage value for calculating the threshold.
+        :param threshold: The threshold for event detection.
+        :param window_size: The size of the rolling window for RMS calculation.
+        :param event_type: The type of event to detect ('sag' or 'swell').
+        :return: A list of dictionaries, each representing a detected event.
+        """
+        events = []
+        voltage_index = self._find_channel_index(voltage_channel_id, "analog")
+
+        if voltage_index is None:
+            return [{"error": f"Voltage channel '{voltage_channel_id}' not found."}]
+
+        voltage_data = self.analog_channels[voltage_index]
+        rms_values = np.sqrt(
+            np.convolve(
+                np.array(voltage_data) ** 2,
+                np.ones(window_size) / window_size,
+                mode="valid",
+            )
+        )
+        event_threshold = nominal_voltage * threshold
+
+        if event_type == "sag":
+            indices = np.where(rms_values < event_threshold)[0]
+            result_key = "min_rms_voltage"
+        elif event_type == "swell":
+            indices = np.where(rms_values > event_threshold)[0]
+            result_key = "max_rms_voltage"
+        else:
+            return [{"error": "Invalid event type specified."}]
+
+        if indices.size > 0:
+            start_index = indices[0]
+            start_time = self.time[start_index]
+            events.append(
+                {
+                    "channel_id": voltage_channel_id,
+                    "start_time": start_time,
+                    result_key: rms_values[start_index],
+                }
+            )
+        return events
 
     def analyze_frequency_deviation(
         self, voltage_channel_id: str, nominal_freq: float, threshold: float = 1.0
