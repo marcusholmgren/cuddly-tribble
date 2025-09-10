@@ -17,6 +17,12 @@ def main():
         help="Display information about the COMTRADE file, including channel IDs.",
     )
     parser_info.add_argument("cfg_file", help="Path to the COMTRADE .cfg file.")
+    parser_info.add_argument(
+        "--encoding",
+        type=str,
+        default="utf-8",
+        help="Encoding of the configuration file.",
+    )
 
     # Subparser for conformance analysis
     parser_conformance = subparsers.add_parser(
@@ -25,6 +31,12 @@ def main():
     parser_conformance.add_argument("cfg_file", help="Path to the COMTRADE .cfg file.")
     parser_conformance.add_argument(
         "--freq", type=float, default=60.0, help="Expected line frequency."
+    )
+    parser_conformance.add_argument(
+        "--encoding",
+        type=str,
+        default="utf-8",
+        help="Encoding of the configuration file.",
     )
 
     # Subparser for fault analysis
@@ -46,6 +58,12 @@ def main():
     parser_faults.add_argument(
         "--nominal-v", type=float, required=True, help="Nominal voltage."
     )
+    parser_faults.add_argument(
+        "--encoding",
+        type=str,
+        default="utf-8",
+        help="Encoding of the configuration file.",
+    )
 
     # Subparser for fault analysis grid search
     parser_faults_gs = subparsers.add_parser(
@@ -56,17 +74,26 @@ def main():
     parser_faults_gs.add_argument(
         "--nominal-v", type=float, required=True, help="Nominal voltage."
     )
+    parser_faults_gs.add_argument(
+        "--encoding",
+        type=str,
+        default="utf-8",
+        help="Encoding of the configuration file.",
+    )
 
     args = parser.parse_args()
-    analyzer = ComtradeAnalyzer(args.cfg_file)
 
     if args.command == "info":
+        analyzer = ComtradeAnalyzer(args.cfg_file, encoding=args.encoding)
         run_info(analyzer)
     elif args.command == "conformance":
+        analyzer = ComtradeAnalyzer(args.cfg_file, encoding=args.encoding)
         run_conformance_checks(analyzer, args)
     elif args.command == "faults":
+        analyzer = ComtradeAnalyzer(args.cfg_file, encoding=args.encoding)
         run_fault_analysis(analyzer, args)
     elif args.command == "faults-grid-search":
+        analyzer = ComtradeAnalyzer(args.cfg_file, encoding=args.encoding)
         run_fault_analysis_grid_search(analyzer, args)
 
 
