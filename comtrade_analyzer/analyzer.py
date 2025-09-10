@@ -16,12 +16,13 @@ class ComtradeAnalyzer:
         :param file_path: The path to the COMTRADE .cfg or .cff file.
         :param encoding: The encoding of the configuration file.
         """
+        ct_np = comtrade.Comtrade(use_numpy_arrays=True)
         self.file_path = file_path
         if file_path.lower().endswith(".cff"):
-            self.recorder = comtrade.load(file_path, encoding=encoding)
+            self.recorder = ct_np.load(file_path, encoding=encoding)
         else:
             self.dat_path = file_path.replace(".cfg", ".dat").replace(".CFG", ".DAT")
-            self.recorder = comtrade.load(file_path, self.dat_path, encoding=encoding)
+            self.recorder = ct_np.load(file_path, self.dat_path, encoding=encoding)
 
     @property
     def cfg(self):
@@ -247,6 +248,7 @@ class ComtradeAnalyzer:
             return [{"error": f"Voltage channel '{voltage_channel_id}' not found."}]
 
         voltage_data = self.analog_channels[voltage_index]
+        # Could be optimized using scipy.signal.fftconvolve instead of np.convolve
         rms_values = np.sqrt(
             np.convolve(
                 np.array(voltage_data) ** 2,
